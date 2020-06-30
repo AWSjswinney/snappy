@@ -224,7 +224,7 @@ tagLit62Plus:
 tagLit63:
 	// case x == 63:
 	// x = uint32(src[s-4]) | uint32(src[s-3])<<8 | uint32(src[s-2])<<16 | uint32(src[s-1])<<24
-	MOVW -4(R6), R4
+	MOVWU -4(R6), R4
 	B  doLit
 
 // The code above handles literal tags.
