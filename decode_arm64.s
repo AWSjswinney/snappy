@@ -51,17 +51,17 @@ TEXT ·decode(SB), NOSPLIT, $56-56
 loop:
 	// for s < len(src)
 	CMP R13, R6
-	BEQ  end
+	BEQ end
 
 	// R4 = uint32(src[s])
 	//
 	// switch src[s] & 0x03
-	MOVBU  (R6), R4
-	MOVW    R4, R3
-	ANDW    $3, R3
-	MOVW    $1, R1
-	CMPW    R1, R3
-	BGE     tagCopy
+	MOVBU (R6), R4
+	MOVW  R4, R3
+	ANDW  $3, R3
+	MOVW  $1, R1
+	CMPW  R1, R3
+	BGE   tagCopy
 
 	// ----------------------------------------
 	// The code below handles literal tags.
@@ -70,7 +70,7 @@ loop:
 	// x := uint32(src[s] >> 2)
 	// switch
 	MOVW $60, R1
-	ADD R4>>2, ZR, R4
+	ADD  R4>>2, ZR, R4
 	CMPW R4, R1
 	BLS  tagLit60Plus
 
@@ -96,9 +96,9 @@ doLit:
 	// R2 = len(dst) - d
 	// R3 = len(src) - s
 	MOVD R10, R2
-	SUB R7, R2, R2
+	SUB  R7, R2, R2
 	MOVD R13, R3
-	SUB R6, R3, R3
+	SUB  R6, R3, R3
 
 	// !!! Try a faster technique for short (16 or fewer bytes) copies.
 	//
@@ -138,14 +138,14 @@ doLit:
 	// s += length
 	ADD R4, R7, R7
 	ADD R4, R6, R6
-	B  loop
+	B   loop
 
 callMemmove:
 	// if length > len(dst)-d || length > len(src)-s { etc }
-	CMP  R2, R4
-	BGT  errCorrupt
-	CMP  R3, R4
-	BGT  errCorrupt
+	CMP R2, R4
+	BGT errCorrupt
+	CMP R3, R4
+	BGT errCorrupt
 
 	// copy(dst[d:], src[s:s+length])
 	//
@@ -168,17 +168,17 @@ callMemmove:
 	MOVD dst_base+0(FP), R8
 	MOVD dst_len+8(FP), R9
 	MOVD R8, R10
-	ADD R9, R10, R10
+	ADD  R9, R10, R10
 	MOVD src_base+24(FP), R11
 	MOVD src_len+32(FP), R12
 	MOVD R11, R13
-	ADD R12, R13, R13
+	ADD  R12, R13, R13
 
 	// d += length
 	// s += length
 	ADD R4, R7, R7
 	ADD R4, R6, R6
-	B  loop
+	B   loop
 
 tagLit60Plus:
 	// !!! This fragment does the
@@ -186,10 +186,10 @@ tagLit60Plus:
 	// s += x - 58; if uint(s) > uint(len(src)) { etc }
 	//
 	// checks. In the asm version, we code it once instead of once per switch case.
-	ADD R4, R6, R6
-	SUB $58, R6, R6
+	ADD  R4, R6, R6
+	SUB  $58, R6, R6
 	MOVD R6, R3
-	SUB R11, R3, R3
+	SUB  R11, R3, R3
 	CMP  R12, R3
 	BGT  errCorrupt
 
@@ -212,24 +212,24 @@ tagLit61:
 tagLit62Plus:
 	MOVW $62, R1
 	CMPW R1, R4
-	BHI   tagLit63
+	BHI  tagLit63
 
 	// case x == 62:
 	// x = uint32(src[s-3]) | uint32(src[s-2])<<8 | uint32(src[s-1])<<16
-	MOVHU   -3(R6), R4
-	MOVBU   -1(R6), R3
-	ORR     R3<<16, R4
+	MOVHU -3(R6), R4
+	MOVBU -1(R6), R3
+	ORR   R3<<16, R4
 	B     doLit
 
 tagLit63:
 	// case x == 63:
 	// x = uint32(src[s-4]) | uint32(src[s-3])<<8 | uint32(src[s-2])<<16 | uint32(src[s-1])<<24
 	MOVWU -4(R6), R4
-	B  doLit
+	B     doLit
 
-// The code above handles literal tags.
-// ----------------------------------------
-// The code below handles copy tags.
+	// The code above handles literal tags.
+	// ----------------------------------------
+	// The code below handles copy tags.
 
 tagCopy4:
 	// case tagCopy4:
@@ -238,13 +238,13 @@ tagCopy4:
 
 	// if uint(s) > uint(len(src)) { etc }
 	MOVD R6, R3
-	SUB R11, R3, R3
+	SUB  R11, R3, R3
 	CMP  R12, R3
 	BGT  errCorrupt
 
 	// length = 1 + int(src[s-5])>>2
 	MOVD $1, R1
-	ADD R4>>2, R1, R4
+	ADD  R4>>2, R1, R4
 
 	// offset = int(uint32(src[s-4]) | uint32(src[s-3])<<8 | uint32(src[s-2])<<16 | uint32(src[s-1])<<24)
 	MOVWU -4(R6), R5
@@ -257,7 +257,7 @@ tagCopy2:
 
 	// if uint(s) > uint(len(src)) { etc }
 	MOVD R6, R3
-	SUB R11, R3, R3
+	SUB  R11, R3, R3
 	CMP  R12, R3
 	BGT  errCorrupt
 
@@ -284,20 +284,20 @@ tagCopy:
 
 	// if uint(s) > uint(len(src)) { etc }
 	MOVD R6, R3
-	SUB R11, R3, R3
+	SUB  R11, R3, R3
 	CMP  R12, R3
 	BGT  errCorrupt
 
 	// offset = int(uint32(src[s-2])&0xe0<<3 | uint32(src[s-1]))
-	MOVD    R4, R5
-	AND     $0xe0, R5
-	MOVBU   -1(R6), R3
-	ORR     R5<<3, R3, R5
+	MOVD  R4, R5
+	AND   $0xe0, R5
+	MOVBU -1(R6), R3
+	ORR   R5<<3, R3, R5
 
 	// length = 4 + int(src[s-2])>>2&0x7
 	MOVD $7, R1
-	AND R4>>2, R1, R4
-	ADD $4, R4, R4
+	AND  R4>>2, R1, R4
+	ADD  $4, R4, R4
 
 doCopy:
 	// This is the end of the outer "switch", when we have a copy tag.
@@ -313,13 +313,13 @@ doCopy:
 
 	// if d < offset { etc }
 	MOVD R7, R3
-	SUB R8, R3, R3
+	SUB  R8, R3, R3
 	CMP  R5, R3
 	BLT  errCorrupt
 
 	// if length > len(dst)-d { etc }
 	MOVD R10, R3
-	SUB R7, R3, R3
+	SUB  R7, R3, R3
 	CMP  R3, R4
 	BGT  errCorrupt
 
@@ -329,9 +329,9 @@ doCopy:
 	//	- R14 = len(dst)-d
 	//	- R15 = &dst[d-offset]
 	MOVD R10, R14
-	SUB R7, R14, R14
+	SUB  R7, R14, R14
 	MOVD R7, R15
-	SUB R5, R15, R15
+	SUB  R5, R15, R15
 
 	// !!! Try a faster technique for short (16 or fewer bytes) forward copies.
 	//
@@ -358,8 +358,8 @@ doCopy:
 	MOVD R2, 0(R7)
 	MOVD 8(R15), R3
 	MOVD R3, 8(R7)
-	ADD R4, R7, R7
-	B  loop
+	ADD  R4, R7, R7
+	B    loop
 
 slowForwardCopy:
 	// !!! If the forward copy is longer than 16 bytes, or if offset < 8, we
@@ -411,8 +411,8 @@ slowForwardCopy:
 	//   goto verySlowForwardCopy
 	// }
 	SUB $10, R14, R14
-	CMP  R14, R4
-	BGT  verySlowForwardCopy
+	CMP R14, R4
+	BGT verySlowForwardCopy
 
 makeOffsetAtLeast8:
 	// !!! As above, expand the pattern so that offset >= 8 and we can use
@@ -431,10 +431,10 @@ makeOffsetAtLeast8:
 	BGE  fixUpSlowForwardCopy
 	MOVD (R15), R3
 	MOVD R3, (R7)
-	SUB R5, R4, R4
-	ADD R5, R7, R7
-	ADD R5, R5, R5
-	B  makeOffsetAtLeast8
+	SUB  R5, R4, R4
+	ADD  R5, R7, R7
+	ADD  R5, R5, R5
+	B    makeOffsetAtLeast8
 
 fixUpSlowForwardCopy:
 	// !!! Add length (which might be negative now) to d (implied by R7 being
@@ -443,7 +443,7 @@ fixUpSlowForwardCopy:
 	// length is positive, copying the remaining length bytes will write to the
 	// right place.
 	MOVD R7, R2
-	ADD R4, R7, R7
+	ADD  R4, R7, R7
 
 finishSlowForwardCopy:
 	// !!! Repeat 8-byte load/stores until length <= 0. Ending with a negative
@@ -454,10 +454,10 @@ finishSlowForwardCopy:
 	BLE  loop
 	MOVD (R15), R3
 	MOVD R3, (R2)
-	ADD $8, R15, R15
-	ADD $8, R2, R2
-	SUB $8, R4, R4
-	B  finishSlowForwardCopy
+	ADD  $8, R15, R15
+	ADD  $8, R2, R2
+	SUB  $8, R4, R4
+	B    finishSlowForwardCopy
 
 verySlowForwardCopy:
 	// verySlowForwardCopy is a simple implementation of forward copy. In C
@@ -474,23 +474,23 @@ verySlowForwardCopy:
 	// }
 	MOVB (R15), R3
 	MOVB R3, (R7)
-	ADD $1, R15, R15
-	ADD $1, R7, R7
-	SUB $1, R4, R4
+	ADD  $1, R15, R15
+	ADD  $1, R7, R7
+	SUB  $1, R4, R4
 	MOVD $0, R1
-	CMP R1, R4
+	CMP  R1, R4
 	BNE  verySlowForwardCopy
-	B  loop
+	B    loop
 
-// The code above handles copy tags.
-// ----------------------------------------
+	// The code above handles copy tags.
+	// ----------------------------------------
 
 end:
 	// This is the end of the "for s < len(src)".
 	//
 	// if d != len(dst) { etc }
-	CMP  R10, R7
-	BNE  errCorrupt
+	CMP R10, R7
+	BNE errCorrupt
 
 	// return 0
 	MOVD $0, ret+48(FP)

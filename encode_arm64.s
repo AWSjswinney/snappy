@@ -36,33 +36,33 @@ TEXT ·emitLiteral(SB), NOSPLIT, $32-56
 	SUBW $1, R4, R4
 
 	MOVW $60, R2
-	CMPW  R2, R4
+	CMPW R2, R4
 	BLT  oneByte
 	MOVW $256, R2
-	CMPW  R2, R4
+	CMPW R2, R4
 	BLT  twoBytes
 
 threeBytes:
 	MOVD $0xf4, R2
 	MOVB R2, 0(R8)
 	MOVW R4, 1(R8)
-	ADD $3, R8, R8
-	ADD $3, R6, R6
-	B  memmove
+	ADD  $3, R8, R8
+	ADD  $3, R6, R6
+	B    memmove
 
 twoBytes:
 	MOVD $0xf0, R2
 	MOVB R2, 0(R8)
 	MOVB R4, 1(R8)
-	ADD $2, R8, R8
-	ADD $2, R6, R6
-	B  memmove
+	ADD  $2, R8, R8
+	ADD  $2, R6, R6
+	B    memmove
 
 oneByte:
 	LSLW $2, R4, R4
 	MOVB R4, 0(R8)
-	ADD $1, R8, R8
-	ADD $1, R6, R6
+	ADD  $1, R8, R8
+	ADD  $1, R6, R6
 
 memmove:
 	MOVD R6, ret+48(FP)
@@ -106,61 +106,61 @@ loop0:
 	MOVD $0xfe, R2
 	MOVB R2, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
-	SUB $64, R3, R3
-	B  loop0
+	ADD  $3, R8, R8
+	SUB  $64, R3, R3
+	B    loop0
 
 step1:
 	// if length > 64 { etc }
 	MOVD $64, R2
-	CMP R2, R3
+	CMP  R2, R3
 	BLE  step2
 
 	// Emit a length 60 copy, encoded as 3 bytes.
 	MOVD $0xee, R2
 	MOVB R2, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
-	SUB $60, R3, R3
+	ADD  $3, R8, R8
+	SUB  $60, R3, R3
 
 step2:
 	// if length >= 12 || offset >= 2048 { goto step3 }
 	MOVD $12, R2
-	CMP R2, R3
+	CMP  R2, R3
 	BGE  step3
 	MOVW $2048, R2
-	CMPW  R2, R11
+	CMPW R2, R11
 	BGE  step3
 
 	// Emit the remaining copy, encoded as 2 bytes.
 	MOVB R11, 1(R8)
 	LSRW $3, R11, R11
-	AND $0xe0, R11, R11
+	AND  $0xe0, R11, R11
 	SUB  $4, R3, R3
 	LSLW $2, R3
 	AND  $0xff, R3, R3
-	ORRW  R3, R11, R11
-	ORRW  $1, R11, R11
+	ORRW R3, R11, R11
+	ORRW $1, R11, R11
 	MOVB R11, 0(R8)
-	ADD $2, R8, R8
+	ADD  $2, R8, R8
 
 	// Return the number of bytes written.
-	SUB R7, R8, R8
+	SUB  R7, R8, R8
 	MOVD R8, ret+40(FP)
 	RET
 
 step3:
 	// Emit the remaining copy, encoded as 3 bytes.
-	SUB $1, R3, R3
+	SUB  $1, R3, R3
 	AND  $0xff, R3, R3
 	LSLW $2, R3, R3
-	ORRW  $2, R3, R3
+	ORRW $2, R3, R3
 	MOVB R3, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
+	ADD  $3, R8, R8
 
 	// Return the number of bytes written.
-	SUB R7, R8, R8
+	SUB  R7, R8, R8
 	MOVD R8, ret+40(FP)
 	RET
 
@@ -183,24 +183,24 @@ TEXT ·extendMatch(SB), NOSPLIT, $0-48
 	MOVD src_len+8(FP), R14
 	MOVD i+24(FP), R15
 	MOVD j+32(FP), R7
-	ADD R6, R14, R14
-	ADD R6, R15, R15
-	ADD R6, R7, R7
+	ADD  R6, R14, R14
+	ADD  R6, R15, R15
+	ADD  R6, R7, R7
 	MOVD R14, R13
-	SUB $8, R13, R13
+	SUB  $8, R13, R13
 
 cmp8:
 	// As long as we are 8 or more bytes before the end of src, we can load and
 	// compare 8 bytes at a time. If those 8 bytes are equal, repeat.
 	CMP  R13, R7
-	BHI   cmp1
+	BHI  cmp1
 	MOVD (R15), R3
 	MOVD (R7), R4
 	CMP  R4, R3
 	BNE  bsf
-	ADD $8, R15, R15
-	ADD $8, R7, R7
-	B  cmp8
+	ADD  $8, R15, R15
+	ADD  $8, R7, R7
+	B    cmp8
 
 bsf:
 	// If those 8 bytes were not equal, XOR the two 8 byte values, and return
@@ -209,13 +209,13 @@ bsf:
 	// combination of which finds the least significant bit which is set.
 	// The arm64 architecture is little-endian, and the shift by 3 converts
 	// a bit index to a byte index.
-	EOR R3, R4, R4
+	EOR  R3, R4, R4
 	RBIT R4, R4
-	CLZ R4, R4
-	ADD R4>>3, R7, R7
+	CLZ  R4, R4
+	ADD  R4>>3, R7, R7
 
 	// Convert from &src[ret] to ret.
-	SUB R6, R7, R7
+	SUB  R6, R7, R7
 	MOVD R7, ret+40(FP)
 	RET
 
@@ -225,15 +225,15 @@ cmp1:
 	BLS  extendMatchEnd
 	MOVB (R15), R3
 	MOVB (R7), R4
-	CMP R4, R3
+	CMP  R4, R3
 	BNE  extendMatchEnd
-	ADD $1, R15, R15
-	ADD $1, R7, R7
-	B  cmp1
+	ADD  $1, R15, R15
+	ADD  $1, R7, R7
+	B    cmp1
 
 extendMatchEnd:
 	// Convert from &src[ret] to ret.
-	SUB R6, R7, R7
+	SUB  R6, R7, R7
 	MOVD R7, ret+40(FP)
 	RET
 
@@ -273,9 +273,9 @@ TEXT ·encodeBlock(SB), 0, $32896-56
 	MOVD src_len+32(FP), R14
 
 	// shift, tableSize := uint32(32-8), 1<<8
-	MOVD $24, R5
-	MOVD $256, R6
-	MOVW $0xa7bd, R16
+	MOVD  $24, R5
+	MOVD  $256, R6
+	MOVW  $0xa7bd, R16
 	MOVKW $(0x1e35<<16), R16
 
 calcShift:
@@ -287,9 +287,9 @@ calcShift:
 	BGE  varTable
 	CMP  R14, R6
 	BGE  varTable
-	SUB $1, R5, R5
-	LSL $1, R6, R6
-	B  calcShift
+	SUB  $1, R5, R5
+	LSL  $1, R6, R6
+	B    calcShift
 
 varTable:
 	// var table [maxTableSize]uint16
@@ -300,10 +300,12 @@ varTable:
 	// 2048 writes that would zero-initialize all of table's 32768 bytes.
 	// This clear could overrun the first tableSize elements, but it won't
 	// overrun the allocated stack size.
-	ADD $128, RSP, R17
+	ADD  $128, RSP, R17
 	MOVD R17, R4
+
 	// !!! R6 = &src[tableSize]
 	ADD R6<<1, R17, R6
+
 	// zero the SIMD registers
 	VEOR V0.B16, V0.B16, V0.B16
 	VEOR V1.B16, V1.B16, V1.B16
@@ -312,15 +314,15 @@ varTable:
 
 memclr:
 	VST1.P [V0.B16, V1.B16, V2.B16, V3.B16], 64(R4)
-	CMP R4, R6
-	BHI memclr
+	CMP    R4, R6
+	BHI    memclr
 
 	// !!! R6 = &src[0]
 	MOVD R7, R6
 
 	// sLimit := len(src) - inputMargin
 	MOVD R14, R9
-	SUB $15, R9, R9
+	SUB  $15, R9, R9
 
 	// !!! Pre-emptively spill R5, R6 and R9 to the stack. Their values don't
 	// change for the rest of the function.
@@ -335,9 +337,9 @@ memclr:
 	ADD $1, R7, R7
 
 	// nextHash := hash(load32(src, s), shift)
-	MOVW  0(R7), R11
+	MOVW 0(R7), R11
 	MULW R16, R11, R11
-	LSRW  R5, R11, R11
+	LSRW R5, R11, R11
 
 outer:
 	// for { etc }
@@ -359,7 +361,7 @@ inner0:
 
 	// bytesBetweenHashLookups := skip >> 5
 	MOVD R12, R14
-	LSR $5, R14, R14
+	LSR  $5, R14, R14
 
 	// nextS = s + bytesBetweenHashLookups
 	ADD R14, R13, R13
@@ -369,28 +371,28 @@ inner0:
 
 	// if nextS > sLimit { goto emitRemainder }
 	MOVD R13, R3
-	SUB R6, R3, R3
+	SUB  R6, R3, R3
 	CMP  R9, R3
-	BHI   emitRemainder
+	BHI  emitRemainder
 
 	// candidate = int(table[nextHash])
 	MOVHU 0(R17)(R11<<1), R15
 
 	// table[nextHash] = uint16(s)
 	MOVD R7, R3
-	SUB R6, R3, R3
+	SUB  R6, R3, R3
 
 	MOVH R3, 0(R17)(R11<<1)
 
 	// nextHash = hash(load32(src, nextS), shift)
-	MOVW  0(R13), R11
+	MOVW 0(R13), R11
 	MULW R16, R11
-	LSRW  R5, R11, R11
+	LSRW R5, R11, R11
 
 	// if load32(src, s) != load32(src, candidate) { continue } break
 	MOVW 0(R7), R3
 	MOVW (R6)(R15*1), R4
-	CMPW  R4, R3
+	CMPW R4, R3
 	BNE  inner0
 
 fourByteMatch:
@@ -401,7 +403,7 @@ fourByteMatch:
 	// !!! Jump to a fast path for short (<= 16 byte) literals. See the comment
 	// on inputMargin in encode.go.
 	MOVD R7, R3
-	SUB R10, R3, R3
+	SUB  R10, R3, R3
 	MOVD $16, R2
 	CMP  R2, R3
 	BLE  emitLiteralFastPath
@@ -415,7 +417,7 @@ fourByteMatch:
 	SUBW $1, R4, R4
 
 	MOVW $60, R2
-	CMPW  R2, R4
+	CMPW R2, R4
 	BLT  inlineEmitLiteralOneByte
 	MOVW $256, R2
 	CMPW R2, R4
@@ -425,20 +427,20 @@ inlineEmitLiteralThreeBytes:
 	MOVD $0xf4, R1
 	MOVB R1, 0(R8)
 	MOVW R4, 1(R8)
-	ADD $3, R8, R8
-	B  inlineEmitLiteralMemmove
+	ADD  $3, R8, R8
+	B    inlineEmitLiteralMemmove
 
 inlineEmitLiteralTwoBytes:
 	MOVD $0xf0, R1
 	MOVB R1, 0(R8)
 	MOVB R4, 1(R8)
-	ADD $2, R8, R8
-	B  inlineEmitLiteralMemmove
+	ADD  $2, R8, R8
+	B    inlineEmitLiteralMemmove
 
 inlineEmitLiteralOneByte:
 	LSLW $2, R4, R4
 	MOVB R4, 0(R8)
-	ADD $1, R8, R8
+	ADD  $1, R8, R8
 
 inlineEmitLiteralMemmove:
 	// Spill local variables (registers) onto the stack; call; unspill.
@@ -450,8 +452,9 @@ inlineEmitLiteralMemmove:
 	MOVD R8, 8(RSP)
 	MOVD R10, 16(RSP)
 	MOVD R3, 24(RSP)
+
 	// Finish the "d +=" part of "d += emitLiteral(etc)".
-	ADD R3, R8, R8
+	ADD  R3, R8, R8
 	MOVD R7, 80(RSP)
 	MOVD R8, 88(RSP)
 	MOVD R15, 120(RSP)
@@ -462,7 +465,7 @@ inlineEmitLiteralMemmove:
 	MOVD 88(RSP), R8
 	MOVD 96(RSP), R9
 	MOVD 120(RSP), R15
-	B  inner1
+	B    inner1
 
 inlineEmitLiteralEnd:
 	// End inline of the emitLiteral call.
@@ -472,10 +475,10 @@ emitLiteralFastPath:
 	// !!! Emit the 1-byte encoding "uint8(len(lit)-1)<<2".
 	MOVB R3, R4
 	SUBW $1, R4, R4
-	AND $0xff, R4, R4
+	AND  $0xff, R4, R4
 	LSLW $2, R4, R4
 	MOVB R4, (R8)
-	ADD $1, R8, R8
+	ADD  $1, R8, R8
 
 	// !!! Implement the copy from lit to dst as a 16-byte load and store.
 	// (Encode's documentation says that dst and src must not overlap.)
@@ -498,8 +501,8 @@ inner1:
 
 	// !!! offset := base - candidate
 	MOVD R12, R11
-	SUB R15, R11, R11
-	SUB R6, R11, R11
+	SUB  R15, R11, R11
+	SUB  R6, R11, R11
 
 	// ----------------------------------------
 	// Begin inline of the extendMatch call.
@@ -508,11 +511,11 @@ inner1:
 
 	// !!! R14 = &src[len(src)]
 	MOVD src_len+32(FP), R14
-	ADD R6, R14, R14
+	ADD  R6, R14, R14
 
 	// !!! R13 = &src[len(src) - 8]
 	MOVD R14, R13
-	SUB $8, R13, R13
+	SUB  $8, R13, R13
 
 	// !!! R15 = &src[candidate + 4]
 	ADD $4, R15, R15
@@ -525,14 +528,14 @@ inlineExtendMatchCmp8:
 	// As long as we are 8 or more bytes before the end of src, we can load and
 	// compare 8 bytes at a time. If those 8 bytes are equal, repeat.
 	CMP  R13, R7
-	BHI   inlineExtendMatchCmp1
+	BHI  inlineExtendMatchCmp1
 	MOVD (R15), R3
 	MOVD (R7), R4
 	CMP  R4, R3
 	BNE  inlineExtendMatchBSF
-	ADD $8, R15, R15
-	ADD $8, R7, R7
-	B  inlineExtendMatchCmp8
+	ADD  $8, R15, R15
+	ADD  $8, R7, R7
+	B    inlineExtendMatchCmp8
 
 inlineExtendMatchBSF:
 	// If those 8 bytes were not equal, XOR the two 8 byte values, and return
@@ -541,11 +544,11 @@ inlineExtendMatchBSF:
 	// combination of which finds the least significant bit which is set.
 	// The arm64 architecture is little-endian, and the shift by 3 converts
 	// a bit index to a byte index.
-	EOR R3, R4, R4
+	EOR  R3, R4, R4
 	RBIT R4, R4
-	CLZ R4, R4
-	ADD R4>>3, R7, R7
-	B  inlineExtendMatchEnd
+	CLZ  R4, R4
+	ADD  R4>>3, R7, R7
+	B    inlineExtendMatchEnd
 
 inlineExtendMatchCmp1:
 	// In src's tail, compare 1 byte at a time.
@@ -553,11 +556,11 @@ inlineExtendMatchCmp1:
 	BLS  inlineExtendMatchEnd
 	MOVB (R15), R3
 	MOVB (R7), R4
-	CMP R4, R3
+	CMP  R4, R3
 	BNE  inlineExtendMatchEnd
-	ADD $1, R15, R15
-	ADD $1, R7, R7
-	B  inlineExtendMatchCmp1
+	ADD  $1, R15, R15
+	ADD  $1, R7, R7
+	B    inlineExtendMatchCmp1
 
 inlineExtendMatchEnd:
 	// End inline of the extendMatch call.
@@ -570,42 +573,42 @@ inlineExtendMatchEnd:
 
 	// !!! length := s - base
 	MOVD R7, R3
-	SUB R12, R3, R3
+	SUB  R12, R3, R3
 
 inlineEmitCopyLoop0:
 	// for length >= 68 { etc }
 	MOVW $68, R2
-	CMPW  R2, R3
+	CMPW R2, R3
 	BLT  inlineEmitCopyStep1
 
 	// Emit a length 64 copy, encoded as 3 bytes.
 	MOVD $0xfe, R1
 	MOVB R1, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
+	ADD  $3, R8, R8
 	SUBW $64, R3, R3
-	B  inlineEmitCopyLoop0
+	B    inlineEmitCopyLoop0
 
 inlineEmitCopyStep1:
 	// if length > 64 { etc }
 	MOVW $64, R2
-	CMPW  R2, R3
+	CMPW R2, R3
 	BLE  inlineEmitCopyStep2
 
 	// Emit a length 60 copy, encoded as 3 bytes.
 	MOVD $0xee, R1
 	MOVB R1, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
+	ADD  $3, R8, R8
 	SUBW $60, R3, R3
 
 inlineEmitCopyStep2:
 	// if length >= 12 || offset >= 2048 { goto inlineEmitCopyStep3 }
 	MOVW $12, R2
-	CMPW  R2, R3
+	CMPW R2, R3
 	BGE  inlineEmitCopyStep3
 	MOVW $2048, R2
-	CMPW  R2, R11
+	CMPW R2, R11
 	BGE  inlineEmitCopyStep3
 
 	// Emit the remaining copy, encoded as 2 bytes.
@@ -615,20 +618,20 @@ inlineEmitCopyStep2:
 	SUBW $4, R3, R3
 	AND  $0xff, R3, R3
 	LSLW $2, R3, R3
-	ORRW  R3, R11, R11
-	ORRW  $1, R11, R11
+	ORRW R3, R11, R11
+	ORRW $1, R11, R11
 	MOVB R11, 0(R8)
-	ADD $2, R8, R8
-	B  inlineEmitCopyEnd
+	ADD  $2, R8, R8
+	B    inlineEmitCopyEnd
 
 inlineEmitCopyStep3:
 	// Emit the remaining copy, encoded as 3 bytes.
 	SUBW $1, R3, R3
 	LSLW $2, R3, R3
-	ORRW  $2, R3, R3
+	ORRW $2, R3, R3
 	MOVB R3, 0(R8)
 	MOVW R11, 1(R8)
-	ADD $3, R8, R8
+	ADD  $3, R8, R8
 
 inlineEmitCopyEnd:
 	// End inline of the emitCopy call.
@@ -639,8 +642,8 @@ inlineEmitCopyEnd:
 
 	// if s >= sLimit { goto emitRemainder }
 	MOVD R7, R3
-	SUB R6, R3, R3
-	CMP R3, R9
+	SUB  R6, R3, R3
+	CMP  R3, R9
 	BLS  emitRemainder
 
 	// As per the encode_other.go code:
@@ -651,40 +654,40 @@ inlineEmitCopyEnd:
 	MOVD -1(R7), R14
 
 	// prevHash := hash(uint32(x>>0), shift)
-	MOVW  R14, R11
+	MOVW R14, R11
 	MULW R16, R11, R11
-	LSRW  R5, R11, R11
+	LSRW R5, R11, R11
 
 	// table[prevHash] = uint16(s-1)
 	MOVD R7, R3
-	SUB R6, R3, R3
-	SUB $1, R3, R3
+	SUB  R6, R3, R3
+	SUB  $1, R3, R3
 
 	MOVHU R3, 0(R17)(R11<<1)
 
 	// currHash := hash(uint32(x>>8), shift)
 	LSR  $8, R14, R14
-	MOVW  R14, R11
+	MOVW R14, R11
 	MULW R16, R11, R11
-	LSRW  R5, R11, R11
+	LSRW R5, R11, R11
 
 	// candidate = int(table[currHash])
 	MOVHU 0(R17)(R11<<1), R15
 
 	// table[currHash] = uint16(s)
-	ADD $1, R3, R3
+	ADD   $1, R3, R3
 	MOVHU R3, 0(R17)(R11<<1)
 
 	// if uint32(x>>8) == load32(src, candidate) { continue }
 	MOVW (R6)(R15*1), R4
-	CMPW  R4, R14
+	CMPW R4, R14
 	BEQ  inner1
 
 	// nextHash = hash(uint32(x>>16), shift)
 	LSR  $8, R14, R14
-	MOVW  R14, R11
+	MOVW R14, R11
 	MULW R16, R11, R11
-	LSRW  R5, R11, R11
+	LSRW R5, R11, R11
 
 	// s++
 	ADD $1, R7, R7
@@ -695,7 +698,7 @@ inlineEmitCopyEnd:
 emitRemainder:
 	// if nextEmit < len(src) { etc }
 	MOVD src_len+32(FP), R3
-	ADD R6, R3, R3
+	ADD  R6, R3, R3
 	CMP  R3, R10
 	BEQ  encodeBlockEnd
 
@@ -703,10 +706,10 @@ emitRemainder:
 	//
 	// Push args.
 	MOVD R8, 8(RSP)
-	MOVD $0, 16(RSP)   // Unnecessary, as the callee ignores it, but conservative.
+	MOVD $0, 16(RSP)  // Unnecessary, as the callee ignores it, but conservative.
 	MOVD $0, 24(RSP)  // Unnecessary, as the callee ignores it, but conservative.
 	MOVD R10, 32(RSP)
-	SUB R10, R3, R3
+	SUB  R10, R3, R3
 	MOVD R3, 40(RSP)
 	MOVD R3, 48(RSP)  // Unnecessary, as the callee ignores it, but conservative.
 
@@ -717,10 +720,10 @@ emitRemainder:
 
 	// Finish the "d +=" part of "d += emitLiteral(etc)".
 	MOVD 56(RSP), R1
-	ADD R1, R8, R8
+	ADD  R1, R8, R8
 
 encodeBlockEnd:
 	MOVD dst_base+0(FP), R3
-	SUB R3, R8, R8
+	SUB  R3, R8, R8
 	MOVD R8, d+48(FP)
 	RET
