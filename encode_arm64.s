@@ -1,4 +1,4 @@
-// Copyright 2016 The Go Authors. All rights reserved.
+// Copyright 2020 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -22,7 +22,7 @@
 //	- R8	&dst[i]
 //	- R10	&lit[0]
 //
-// The 36 bytes of stack space is to call runtime·memmove.
+// The 32 bytes of stack space is to call runtime·memmove.
 //
 // The unusual register allocation of local variables, such as R10 for the
 // source pointer, matches the allocation used at the call site in encodeBlock,
